@@ -1,0 +1,26 @@
+group 'edu.pucmm'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.hibernate:hibernate-core:5.1.0.Final'
+    compile 'org.hibernate:hibernate-entitymanager:5.1.0.Final'
+    //Driver de la conexion...
+    compile 'com.h2database:h2:1.4.192'
+    //Spark
+    compile 'com.sparkjava:spark-core:2.6.0'
+    compile 'com.sparkjava:spark-template-freemarker:2.5.5'
+    compile 'org.freemarker:freemarker:2.3.26-incubating'
+    //Habilitar el spark-debug-tool trae un conflicto de librerias con la versión 2.6.0 de Spark.
+    //compile 'com.sparkjava:spark-debug-tools:0.5'
+    compile 'com.google.code.gson:gson:2.6.2'
+    compile 'com.j2html:j2html:1.0.0'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
