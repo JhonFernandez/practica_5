@@ -23,12 +23,7 @@
          */
         function consultarArticulo(href) {
             $.get(href, function (data) {
-                var init = data.indexOf("<div id=\"articles\">");
-                var text = data.substring(init);
-                var fin = text.indexOf("</div>");
-
-                fin = init + fin + 6;
-                $('#ajax').html(data.substring(init, fin));
+                $('#articles').html(data);
             });
 
         }
@@ -85,7 +80,7 @@
                     </li>
                     <#items as page>
                     <#--<li><a href="/article/all/${page}">${page}</a></li>-->
-                        <li><a onclick="consultarArticulo('/article/all/${page}')">${page}</a></li>
+                        <li><a onclick="consultarArticulo('/article/all/ajax/${page}')">${page}</a></li>
                     </#items>
 
                     <li>
@@ -102,9 +97,8 @@
                 Articles
                 <small>By Jhon</small>
             </h1>
-            <div id="ajax">
-                <div id="articles">
-                    <br>
+
+            <div id="articles">
                 <#if articles??>
                     <#list articles as article >
                         <h2>${article.title}</h2>
@@ -138,7 +132,6 @@
                         <hr>
                     </#list>
                 </#if>
-                </div>
             </div>
             <#--fin-->
 

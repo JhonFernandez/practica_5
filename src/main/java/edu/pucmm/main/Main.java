@@ -163,6 +163,28 @@ public class Main {
                 return new ModelAndView(attributes, "article-all.ftl");
             }, freeMarkerEngine);
 
+            get("/all/ajax/:page", (request, response) -> {
+                Map<String, Object> attributes = new HashMap<>();
+                int pagina = Integer.parseInt(request.params("page"));
+                List<Article> articulos;
+                ArrayList<Integer> pages = new ArrayList<>();
+
+                articulos = ArticleDao.getInstance().findAll(pagina * 5, (pagina * 5) + 5);
+
+
+                int cont = 0;
+                for (int i = 0; i < ArticleDao.getInstance().getCount(); i += 5) {
+                    pages.add(cont++);
+                }
+
+                attributes.put("articles", articulos);
+                attributes.put("pages", pages);
+                attributes.put("user", request.session().attribute("user"));
+                attributes.put("hostUrl", request.host());
+                return new ModelAndView(attributes, "article-pagination.ftl");
+            }, freeMarkerEngine);
+
+
             get("/create", (request, response) -> {
                 Map<String, Object> attributes = new HashMap<>();
                 attributes.put("hostUrl", request.host());
