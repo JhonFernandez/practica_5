@@ -42,6 +42,22 @@ public class ServidorMensajesWebSocketHandler {
     public void cerrandoConexion(Session usuario, int statusCode, String reason) {
         System.out.println("Desconectando el usuario: "+usuario.getLocalAddress().getAddress().toString());
         Main.usuariosConectados.remove(usuario);
+        Main.usuariosLibres.remove(usuario);
+        Main.usuarios.remove(usuario);
+        int size = Main.chats.size();
+        for (int i=0;i<size;i++){
+            Main.chats.get(i).salirChat(usuario);
+        }
+        for (int i=0;i<size;i++){
+            if (Main.chats.get(i).getUsuarios().size() == 0){
+                Main.chats.remove(Main.chats.get(i));
+                return;
+            }
+        }
+
+
+
+        System.out.println(Main.chats);
     }
 
     /**

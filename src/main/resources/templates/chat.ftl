@@ -22,7 +22,6 @@
             console.info("Iniciando Jquery -  Ejemplo WebServices");
             conectar();
 
-            alert('hola');
             $("#btn-chat").click(function () {
                 webSocket.send(JSON.stringify({
                     funcionalidad: '0',
@@ -108,7 +107,7 @@
                 try {
                     webSocket.send(JSON.stringify({
                         funcionalidad: '2',
-                        userName: 'marlon'
+                        userName: '${userName}'
                     }));
 
                 }

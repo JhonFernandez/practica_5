@@ -14,7 +14,15 @@ import static j2html.TagCreator.*;
 
 public class Chat {
     private String chatHash;
-    public Set<Usuario> usuarios;
+    private Set<Usuario> usuarios;
+
+    public Set<Usuario> getUsuarios() {
+        return usuarios;
+    }
+
+    public void setUsuarios(Set<Usuario> usuarios) {
+        this.usuarios = usuarios;
+    }
 
     public Chat() {
         this.usuarios = new HashSet<Usuario>();
@@ -62,6 +70,15 @@ public class Chat {
 
     public boolean salirChat(Usuario usuario) {
         return usuarios.remove(usuario);
+    }
+
+    public boolean salirChat(Session usuario) {
+        for (Usuario user: usuarios) {
+            if (user.getSession()==usuario){
+                return usuarios.remove(user);
+            }
+        }
+        return false;
     }
 
     public int candidadUsuarios() {
