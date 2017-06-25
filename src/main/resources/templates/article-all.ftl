@@ -10,23 +10,134 @@
     <link rel="stylesheet" type="text/css" href="/css/chat.css">
     <link rel="stylesheet" type="text/css" href="/css/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="/css/blog-home.css">
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/jquery-3.2.1.min.js"></script>
 
     <script>
+        //abriendo el objeto para el websocket
+        var webSocket;
+        var tiempoReconectar = 5000;
 
         $(document).ready(function () {
-            //console.log('Inicio');
-            //setInterval(consultarFechaServidor, 1000); //Cada un segundo..
+            console.info("Iniciando Jquery -  Ejemplo WebServices");
+            conectar();
+
+            $("#divChat").toggle();
+            $("#divChatFooter").toggle();
+            $("#mostrarEsconder").toggle();
+
+
+            $("#mostrarEsconder").click(function () {
+                $("#divChat").toggle();
+                $("#divChatFooter").toggle();
+            });
+
+
+            $("#btn-chat").click(function () {
+                webSocket.send(JSON.stringify({
+                    funcionalidad: '0',
+                    mensaje: $("#btn-input").val(),
+                    userName: 'jhon',
+                    chat: $("#chatHash").text()
+                }));
+                $("#btn-input").val('');
+            });
+
+            $("#btn-input").keypress(function(e) {
+                if(e.which == 13) {
+                    webSocket.send(JSON.stringify({
+                        funcionalidad: '0',
+                        mensaje: $("#btn-input").val(),
+                        userName: 'jhon',
+                        chat: $("#chatHash").text()
+                    }));
+                    $("#btn-input").val('');
+                }
+            });
+
+
+            $("#cambiarNombre").click(function () {
+                webSocket.send(JSON.stringify({
+                    funcionalidad: '2',
+                    userName: $("#userName").val()
+                }));
+            });
+
+            $("#btn-iniciar").click(function () {
+                webSocket.send(JSON.stringify({
+                    funcionalidad: '1',
+                    userName: $("#btn-iniciar-username").val()
+                }));
+                $("#divIniciar").toggle();
+                $("#divChat").toggle();
+                $("#divChatFooter").toggle();
+                $("#mostrarEsconder").toggle();
+            });
+
+            $("#unirseChat").click(function () {
+                webSocket.send(JSON.stringify({
+                    funcionalidad: '3',
+                    chat: $("#chat").val()
+                }));
+            });
+
+            $("#salirChat").click(function () {
+                webSocket.send(JSON.stringify({
+                    funcionalidad: '4',
+                    chat: ("#chat").val()
+                }));
+            });
         });
 
-        /**
-         * Busca la fecha del servidor y la visualiza en el ID indicado.
-         */
         function consultarArticulo(href) {
             $.get(href, function (data) {
                 $('#articles').html(data);
             });
+        }
+
+        /**
+         *
+         * @param mensaje
+         */
+        function recibirInformacionServidor(mensaje) {
+            var funcionalidad = mensaje.data.split(',')[0];
+            var msg = mensaje.data.split(',')[1];
+            var userName = mensaje.data.split(',')[2];
+            var chat = mensaje.data.split(',')[3];
+
+            if(funcionalidad === '0'){
+                $("#ulChat").append(msg);
+                $("#divChat").scrollTop($("#divChat")[0].scrollHeight);
+            }else if (funcionalidad === '1'){
+                $("#chatHash").text(chat);
+            }
+
+
 
         }
+
+        function conectar() {
+            webSocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/mensajeServidor");
+
+            //indicando los eventos:
+            webSocket.onmessage = function (data) {
+                recibirInformacionServidor(data);
+            };
+            webSocket.onopen = function (e) {
+                console.log("Conectado - status " + this.readyState);
+            };
+            webSocket.onclose = function (e) {
+                console.log("Desconectado - status " + this.readyState);
+            };
+        }
+
+        function verificarConexion() {
+            if (!webSocket || webSocket.readyState == 3) {
+                conectar();
+            }
+        }
+
+        setInterval(verificarConexion, tiempoReconectar); //para reconectar.
 
     </script>
 
@@ -39,10 +150,9 @@
 <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
     <div class="navbar-collapse collapse container">
         <ul class="nav navbar-nav navbar-left">
-            <li class="active"><a href="/article/all/0"><span class="lyphicon glyphicon glyphicon-home"></span> Home</a>
-            </li>
-            <li class=""><a href="/article/create"><span class="lyphicon glyphicon glyphicon-plus"></span> New
-                Article</a></li>
+            <li class="active"><a href="/article/all/0"><span class="lyphicon glyphicon glyphicon-home"></span> Home</a></li>
+            <li class=""><a href="/article/create"><span class="lyphicon glyphicon glyphicon-plus"></span> New Article</a></li>
+            <li class=""><a href="/chat"><span class="lyphicon glyphicon glyphicon-comment"></span> Chat</a></li>
         </ul>
         <ul class="nav navbar-nav navbar-right" style="margin-right: 10px">
             <li class=""><a href="/login" style="font-size: 1.25em">${user!"Login"}</a></li>
@@ -99,6 +209,7 @@
             </h1>
 
             <div id="articles">
+                <br>
                 <#if articles??>
                     <#list articles as article >
                         <h2>${article.title}</h2>
@@ -165,61 +276,32 @@
 
 
 <#--Chat-->
-
-<div class="panel panel-primary cuadro-chat">
-
-    <#--header del chat-->
+<div class="panel panel-primary cuadro-chat" id="panel" >
     <div class="panel-heading">
-        <span class="glyphicon glyphicon-comment"></span> Chat
+        <span class="glyphicon glyphicon-comment"></span> Chat:<label id="chatHash"></label>
+
+        <div class="input-group" id="divIniciar">
+            <input id="btn-iniciar-username" type="text" class="form-control input-sm" placeholder="Coloque un nombre de usuario"/>
+            <span class="input-group-btn">
+                            <button class="btn btn-primary btn-sm" id="btn-iniciar">
+                                Iniciar</button>
+                        </span>
+        </div>
         <div class="btn-group pull-right">
-            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+            <button id="mostrarEsconder" type="button" class="btn btn-primary btn-xs dropdown-toggle" data-toggle="dropdown">
                 <span class="glyphicon glyphicon-chevron-down"></span>
             </button>
-            <ul class="dropdown-menu slidedown">
-                <li><a href="#"><span class="glyphicon glyphicon-refresh">
-                            </span>Actualizar Nombre</a></li>
-            </ul>
         </div>
     </div>
+    <div class="panel-body" id="divChat">
+        <ul class="chat" id="ulChat">
 
-    <#--Body del panel-->
-    <div class="panel-body">
-        <ul class="chat">
-            <li class="left clearfix"><span class="chat-img pull-left">
-                            <img src="http://placehold.it/50/55C1E7/fff&text=U" alt="User Avatar" class="img-circle"/>
-                        </span>
-                <div class="chat-body clearfix">
-                    <div class="header">
-                        <strong class="primary-font">Jack Sparrow</strong>
-                        <small class="pull-right text-muted">
-                            <span class="glyphicon glyphicon-time"></span>14 mins ago
-                        </small>
-                    </div>
-                    <p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur bibendum ornare
-                        dolor, quis ullamcorper ligula sodales.
-                    </p>
-                </div>
-            </li>
-            <li class="right clearfix"><span class="chat-img pull-right">
-                            <img src="http://placehold.it/50/FA6F57/fff&text=ME" alt="User Avatar" class="img-circle"/>
-                        </span>
-                <div class="chat-body clearfix">
-                    <div class="header">
-                        <small class=" text-muted"><span class="glyphicon glyphicon-time"></span>15 mins ago</small>
-                        <strong class="pull-right primary-font">Bhaumik Patel</strong>
-                    </div>
-                    <p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur bibendum ornare
-                        dolor, quis ullamcorper ligula sodales.
-                    </p>
-                </div>
-            </li>
+
+
+
         </ul>
     </div>
-
-    <#--footer del chat-->
-    <div class="panel-footer">
+    <div class="panel-footer" id="divChatFooter">
         <div class="input-group">
             <input id="btn-input" type="text" class="form-control input-sm" placeholder="Type your message here..."/>
             <span class="input-group-btn">
@@ -228,12 +310,8 @@
                         </span>
         </div>
     </div>
-
 </div>
 
 
-
-<script src="/js/vendor/jquery.min.js"></script>
-<script src="/js/bootstrap.js"></script>
 </body>
 </html>

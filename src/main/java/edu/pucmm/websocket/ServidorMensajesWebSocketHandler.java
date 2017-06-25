@@ -9,6 +9,8 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 
+import java.io.IOException;
+
 
 /**
  * Representa la clase para enviar información desde el servidor al cliente.
@@ -53,16 +55,17 @@ public class ServidorMensajesWebSocketHandler {
         int funcionalidad = jelement.getAsJsonObject().get("funcionalidad").getAsInt();
         Usuario usuario =null;
         String mensaje="";
-        int chatHastCode = 0;
+        int chatHastCode;
+        String userName ="";
         System.out.println("Mensaje full: "+message);
         System.out.println("funcionalidad :"+funcionalidad);
         switch (funcionalidad){
             case 0://Enviar Mensaje
                 System.out.println("Case 0");
                 mensaje = jelement.getAsJsonObject().get("mensaje").getAsString();
-                chatHastCode = jelement.getAsJsonObject().get("mensaje").getAsInt();
+                chatHastCode = jelement.getAsJsonObject().get("chat").getAsInt();
                 usuario = obtenerUsuario(session);
-
+                System.out.println("chatHastCode:"+chatHastCode);
                 if (usuario !=null){
                     enviarMensaje(usuario,mensaje,chatHastCode);
                 }else{
@@ -71,6 +74,9 @@ public class ServidorMensajesWebSocketHandler {
             break;
             case 1://Iniciar Chat
                 System.out.println("Case 1");
+                userName = jelement.getAsJsonObject().get("userName").getAsString();
+                cambiarUserName(session,userName);
+
                 usuario = obtenerUsuario(session);
                 if (usuario !=null){
                     iniciarChat(usuario);
@@ -80,17 +86,21 @@ public class ServidorMensajesWebSocketHandler {
             break;
             case 2://Cambiar Nombre
                 System.out.println("Case 2");
-                String userName = jelement.getAsJsonObject().get("userName").getAsString();
+                userName = jelement.getAsJsonObject().get("userName").getAsString();
                 cambiarUserName(session,userName);
             break;
             case 3://Unirse a un Chat
                 System.out.println("Case 3");
                 usuario = obtenerUsuario(session);
-                chatHastCode = jelement.getAsJsonObject().get("mensaje").getAsInt();
+                chatHastCode = jelement.getAsJsonObject().get("chat").getAsInt();
                 unirseChat(usuario,chatHastCode);
             break;
-            case 4:
+            case 4:// unirse a todos los chat
                 System.out.println("Case 4");
+                usuario = obtenerUsuario(session);
+                for (Chat chat: Main.chats ) {
+                    unirseChat(usuario,chat.hashCode());
+                }
             break;
         }
 
@@ -126,6 +136,13 @@ public class ServidorMensajesWebSocketHandler {
         boolean entro = chat.entrarChat(usuario);
         if (entro){
             entro = Main.chats.add(chat);
+            try {
+                usuario.getSession().getRemote().sendString("1,,,"+chat.hashCode());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
             return entro;
         }else{
             return false;
@@ -147,7 +164,13 @@ public class ServidorMensajesWebSocketHandler {
     }
 
     public boolean enviarMensaje(Usuario user,String mensaje, int chatHastCode){
-        return true;
+        if (obtenerChat(chatHastCode) !=null){
+            obtenerChat(chatHastCode).enviarMensaje(user,mensaje);
+            System.out.println("se envio");
+            return true;
+        }
+        System.out.println("no se envio");
+        return false;
     }
 
     public Usuario obtenerUsuario(Session session){
@@ -162,7 +185,7 @@ public class ServidorMensajesWebSocketHandler {
 
     public Chat obtenerChat(int chatHashCode){
         for (Chat chat:Main.chats) {
-            if (chat.hashCode()==chat.hashCode()){
+            if (chat.hashCode()==chatHashCode){
                 return chat;
             }
         }

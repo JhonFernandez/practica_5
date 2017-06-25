@@ -50,45 +50,6 @@ public class Main {
 
         initSpark();
 
-
-
-        /*User user = new User();
-        user.setAdmin(true);
-        user.setAuthor(true);
-        user.setUserName("locon");
-        user.setPassword("1234");
-        user.setName("jhon");
-
-        UserDao.getInstance().crear(user);
-        */
-
-        /*Tag tag = new Tag("comida");
-        Tag tag1 = new Tag("comida1");
-        User user = new User("xpaladix","marlon","1234",true,true);
-        Article article = new Article("titulo","cuerpo",Date.valueOf(LocalDate.now()),user);
-
-        TagDao.getInstance().create(tag);
-        TagDao.getInstance().create(tag1);
-        UserDao.getInstance().create(user);
-            
-
-
-        ArrayList<Tag> tags = new ArrayList<>();
-        tags.add(tag);
-
-
-        article.setTagList(tags);
-        
-            ArticleDao.getInstance().create(article);
-
-        System.out.println(ArticleDao.getInstance().findAll());
-        System.out.println(UserDao.getInstance().findAll());
-        System.out.println(UserDao.getInstance().find("xpaladix").getArticleList());
-        //System.out.println(ArticleDao.getInstance().getInstance().find(1).getTagList());
-        System.out.println(TagDao.getInstance().find(1).getArticleList());
-        System.out.println(ArticleDao.getInstance().find(1).getTagList());
-        System.out.println(TagDao.getInstance().findAll());*/
-
     }
 
     private static void initSpark() {
@@ -97,7 +58,11 @@ public class Main {
         //indicando los recursos publicos.
         //staticFiles.location("/META-INF/resources"); //para utilizar los WebJars.
         staticFileLocation("/publico");
+
         configuration.setClassForTemplateLoading(Main.class, "/templates");
+
+        webSocket("/mensajeServidor", ServidorMensajesWebSocketHandler.class);
+        init();
 
 
         get("/", (request, response) -> {
@@ -110,6 +75,9 @@ public class Main {
         articlePages();
         tagPages();
         valoracion();
+
+        chatPages();
+
     }
 
     private static void loginPages() {
@@ -142,6 +110,7 @@ public class Main {
 
             articleFilter();
             commentPages();
+
             get("/all/:page", (request, response) -> {
                 Map<String, Object> attributes = new HashMap<>();
                 int pagina = Integer.parseInt(request.params("page"));
@@ -641,6 +610,44 @@ public class Main {
                     } else {
                         response.redirect("/login");
                     }
+                }
+            } else {
+                response.redirect("/login");
+            }
+
+        });
+    }
+
+    private static void chatPages() {
+
+        path("/chat", () -> {
+            chatFilter();
+            get("", (request, response) -> {
+                Map<String, Object> attributes = new HashMap<>();
+                attributes.put("chats", Main.chats);
+                attributes.put("userName", request.session().attribute("user"));
+
+                return new ModelAndView(attributes, "chat.ftl");
+            }, freeMarkerEngine);
+
+
+        });
+    }
+
+    private static void chatFilter() {
+        before("", (request, response) -> {
+            System.out.println("AQUI-------> estoy aqui");
+            Map<String, Object> attributes = new HashMap<>();
+            String userName = request.session().attribute("user");
+            boolean allowed = false;
+
+            if (userName != null) {
+                User user = UserDao.getInstance().find(userName);
+                if (user != null) {
+                    allowed = user.getAuthor() || user.getAdmin();
+                }
+                if (!allowed) {
+                    response.redirect("/login");
                 }
             } else {
                 response.redirect("/login");
