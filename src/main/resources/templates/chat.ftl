@@ -22,7 +22,7 @@
             console.info("Iniciando Jquery -  Ejemplo WebServices");
             conectar();
 
-            $("#btn-chat").click(function () {
+            /*$("#btn-chat").click(function () {
                 webSocket.send(JSON.stringify({
                     funcionalidad: '0',
                     mensaje: $("#btn-input").val(),
@@ -43,7 +43,7 @@
                     $("#btn-input").val('');
                 }
             });
-
+*/
 
 
         });
@@ -57,7 +57,7 @@
         }
 
         function buscarChat(chatHash) {
-            $("#chatHash").text(chatHash);
+            $('#panel-'+chatHash).toggle();
         }
 
 
@@ -68,16 +68,14 @@
         function recibirInformacionServidor(mensaje) {
             var funcionalidad = mensaje.data.split(',')[0];
             var msg = mensaje.data.split(',')[1];
-            var userName = mensaje.data.split(',')[2];
-            var chat = mensaje.data.split(',')[3];
+            var chat = mensaje.data.split(',')[2];
 
             if (funcionalidad === '0') {
-                $("#ulChat").append(msg);
+                $('#ulChat-'+chat).append(msg);
                 $("#divChat").scrollTop($("#divChat")[0].scrollHeight);
             } else if (funcionalidad === '1') {
                 $("#chatHash").text(chat);
             }
-
 
         }
 
@@ -100,6 +98,16 @@
             if (!webSocket || webSocket.readyState == 3) {
                 conectar();
             }
+        }
+
+        function enviar(chatHash){
+            webSocket.send(JSON.stringify({
+                funcionalidad: '0',
+                mensaje: $("#btn-input-"+chatHash).val(),
+                userName: 'jhon',
+                chat: chatHash
+            }));
+            $("#btn-input-"+chatHash).val('');
         }
 
         function chat() {
@@ -127,7 +135,7 @@
         }
 
         setInterval(verificarConexion, tiempoReconectar); //para reconectar.
-        setTimeout(chat, 3000);
+        setTimeout(chat, 4000);
 
     </script>
 
@@ -144,24 +152,31 @@
 </#list>
 </div>
 
-<div class="panel panel-primary cuadro-chat" id="panel">
+<#list chats as chat >
+<script>
+    $("#panel-${chat.chatHash}").toggle();
+</script>
+<div class="panel panel-primary cuadro-chat" id="panel-${chat.chatHash}">
     <div class="panel-heading">
-        <span class="glyphicon glyphicon-comment"></span> Chat:<label id="chatHash"></label>
+        <span class="glyphicon glyphicon-comment"></span> Chat:<label id="${chat.chatHash}">${chat.chatHash}</label>
     </div>
     <div class="panel-body" id="divChat">
-        <ul class="chat" id="ulChat">
+        <ul class="chat" id="ulChat-${chat.chatHash}">
 
         </ul>
     </div>
     <div class="panel-footer" id="divChatFooter">
         <div class="input-group">
-            <input id="btn-input" type="text" class="form-control input-sm" placeholder="Type your message here..."/>
+            <input id="btn-input-${chat.chatHash}" type="text" class="form-control input-sm" placeholder="Type your message here..."/>
             <span class="input-group-btn">
-                            <button class="btn btn-warning btn-sm" id="btn-chat">
+                            <button class="btn btn-warning btn-sm" id="btn-chat" onclick="enviar(${chat.chatHash})">
                                 Send</button>
                         </span>
         </div>
     </div>
 </div>
+
+</#list>
+
 </body>
 </html>

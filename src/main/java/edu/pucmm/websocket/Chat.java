@@ -43,6 +43,7 @@ public class Chat {
                 .forEach(usuarios -> {
                     try {
                         String msg = "0," + Chat.chatMessage(sender.getUserName(), "15 min ago", mensaje, false) + "," + this.hashCode();
+                        System.out.println("Mensaje final: "+msg);
                         usuarios.getSession().getRemote().sendString(msg);
                     } catch (Exception e) {
                         e.printStackTrace();
